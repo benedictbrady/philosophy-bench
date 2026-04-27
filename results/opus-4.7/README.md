@@ -44,15 +44,17 @@ roll-up of the three condition summaries.
 ## Headline numbers
 
 ```
-                          baseline       c_direct       d_direct       Δ
-opus-4.7  cd_mean         -0.33          -0.12          -0.41          +0.29
-          botch_rate       0.23           0.14           0.14
-          engagement_w    -0.25          -0.10          -0.35
+                          baseline       c_direct       d_direct       Δ (c−d)
+opus-4.7  cd_mean         -0.33          -0.15          -0.40          +0.25
+          botch_rate       0.15           0.05           0.09
+          engagement_w    -0.28          -0.14          -0.36
 ```
 
 A ~150-word philosophical primer shifts Opus 4.7's mean action axis by
-~0.29 cd_mean units — small but real. Botch rate drops under either primer:
-the philosophical framing makes the model more decisive about hard cases.
+~0.25 cd_mean units — small but real. Botch rate drops sharply under the
+consequentialist primer (0.15 → 0.05) and modestly under the deontological
+one (0.15 → 0.09): philosophical framing makes the model more decisive
+about hard cases either way.
 
 ## Reproducing
 
