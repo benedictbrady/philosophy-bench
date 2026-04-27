@@ -112,7 +112,6 @@ philosophy-bench prime \
   --judge-model gemini-3.1-pro
 ```
 
-See `results/opus-4.7/README.md` for the run date and exact judge panel.
 Note: `claude-opus-4-7` is an Anthropic API alias — exact transcript-level
 reproduction will drift as the underlying snapshot migrates.
 
