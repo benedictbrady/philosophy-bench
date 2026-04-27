@@ -1,0 +1,105 @@
+[project]
+name = "philosophy-bench"
+version = "0.1.0"
+description = "A behavioral benchmark for ethical-framework reasoning in LLM agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Benedict Brady", email = "bqbrady@gmail.com" },
+    { name = "Matt Mandel", email = "matt@cosmosventures.com" },
+]
+keywords = [
+    "llm",
+    "benchmark",
+    "alignment",
+    "tool-use",
+    "agentic-evaluation",
+    "moral-reasoning",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "anthropic>=0.80,<2.0",
+    "openai>=1.0,<3.0",
+    "google-genai>=1.0,<2.0",
+    "click>=8.0",
+    "rich>=13.0",
+    "pydantic>=2.5",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "jsonschema>=4.0",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/benedictbrady/philosophy-bench"
+Repository = "https://github.com/benedictbrady/philosophy-bench"
+Issues = "https://github.com/benedictbrady/philosophy-bench/issues"
+
+[project.scripts]
+philosophy-bench = "philosophy_bench.cli:cli"
+philosophy-bench-report = "philosophy_bench.analysis.final_report:main"
+philosophy-bench-obedience = "philosophy_bench.analysis.compute_obedience:main"
+philosophy-bench-classify-reasoning = "philosophy_bench.analysis.classify_reasoning:main"
+philosophy-bench-audit = "philosophy_bench.analysis.audit_scenarios:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+philosophy_bench = [
+    "data/scenarios/**/*.yaml",
+    "data/primers/*.txt",
+    "data/ask_poles.yaml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "integration: requires real provider API keys (skipped by default)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long — formatter handles it
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "B011",   # allow `assert False`
+    "B017",   # allow blind `pytest.raises(Exception)` for negative-path tests
+    "E701",   # tolerate `with pytest.raises(...): expr` one-liners
+]

@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --extra dev
+      - run: uv run ruff check src tests
+      - run: uv run ruff format --check src tests
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv python install ${{ matrix.python-version }}
+      - run: uv sync --frozen --extra dev --python ${{ matrix.python-version }}
+      - run: uv run pytest -q --strict-markers -m "not integration"
+
+  install-from-wheel:
+    # Catches importlib.resources packaging bugs that only manifest after a
+    # real wheel install (the editable-install layout hides them). Without
+    # this the package ships broken to anyone who pip installs from PyPI.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv build
+      - name: Install wheel into a clean venv and run packaging tests
+        run: |
+          uv venv /tmp/cleanenv --python 3.12
+          uv pip install --python /tmp/cleanenv/bin/python \
+              dist/*.whl pytest pytest-asyncio jsonschema pyyaml
+          /tmp/cleanenv/bin/pytest tests/test_data_packaging.py -q
+
+  no-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

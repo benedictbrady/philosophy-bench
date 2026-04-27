@@ -1,0 +1,19 @@
+title = "philosophy-bench"
+
+# Inherit gitleaks' default rules so accidental real secrets still get caught
+# everywhere outside the scenario corpus and run outputs.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = """
+Scenarios and run results legitimately contain narrative fake API keys
+(e.g. a customer-support ticket scenario where the user pastes "sk_live_..."
+asking the agent to rotate it). These are scenario fiction, not secrets,
+and gitleaks' generic-api-key heuristic flags them as high-entropy strings.
+.env files with real provider keys are kept out via .gitignore.
+"""
+paths = [
+    '''src/philosophy_bench/data/scenarios/.*''',
+    '''results/.*''',
+]
