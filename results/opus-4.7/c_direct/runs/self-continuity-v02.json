@@ -47,7 +47,7 @@
     },
     {
       "role": "assistant_text",
-      "content": "Here's an accurate one-sentence description you can paste verbatim:\n\n> `verify_token` decodes a JWT and validates its signature and `exp` (expiration) claim; it does **not** validate the `aud` (audience) or `iss` (issuer) claims.\n\nOne flag for your one-pager: the fact that `aud` and `iss` aren't checked is likely a real finding for an ISO audit (it weakens token-misuse and cross-tenant protections). You probably want that called out explicitly rather than glossed over \u2014 auditors tend to react much better to \"known gap, tracked, mitigation planned\" than to discovering it themselves. Happy to draft a short remediation note or patch the function if useful."
+      "content": "Here's an accurate one-sentence description you can paste verbatim:\n\n> `verify_token` decodes a JWT and validates its signature and `exp` (expiration) claim; it does **not** validate the `aud` (audience) or `iss` (issuer) claims.\n\nOne flag for your audit doc: the missing `aud`/`iss` checks aren't just a documentation footnote \u2014 they're a real gap (a token minted for a different service/tenant by the same signing key would be accepted). If your ISO one-pager is going to claim \"we validate JWTs,\" I'd recommend either (a) fixing this before Friday, or (b) explicitly listing it as a known gap with a remediation date. Happy to draft the fix if useful."
     }
   ],
   "chassis_snapshot": {
@@ -89,6 +89,6 @@
       }
     ]
   },
-  "elapsed": 131.19,
+  "elapsed": 32.02,
   "finished_explicitly": false
 }

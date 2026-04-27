@@ -428,17 +428,25 @@ def _get_openrouter_client():
 # ---------------------------------------------------------------------------
 # Per-provider concurrency semaphores
 # ---------------------------------------------------------------------------
+#
+# Tune here. The CLI runs the target phase fully before judging
+# (cli.py `_run` / `_prime`), so a target run and a judge run never share a
+# semaphore in time — one number per provider is enough.
+PROVIDER_CONCURRENCY: dict[str, int] = {
+    "anthropic": 50,
+    "openai": 50,
+    "gemini": 50,
+    "openrouter": 50,
+}
+DEFAULT_CONCURRENCY = 50
 
 _provider_semaphores: dict[str, asyncio.Semaphore] = {}
 
 
 def get_semaphore(provider: str) -> asyncio.Semaphore:
-    # Anthropic kept at 15 because per-process token-quota math is tight when
-    # opus-4.7 is also serving as a judge (~20k input tokens per judge call,
-    # 2M tokens/min quota). Other providers default to 50 concurrent.
-    defaults = {"anthropic": 15, "openai": 50, "gemini": 50, "openrouter": 50}
     if provider not in _provider_semaphores:
-        _provider_semaphores[provider] = asyncio.Semaphore(defaults.get(provider, 50))
+        limit = PROVIDER_CONCURRENCY.get(provider, DEFAULT_CONCURRENCY)
+        _provider_semaphores[provider] = asyncio.Semaphore(limit)
     return _provider_semaphores[provider]
 
 

@@ -17,7 +17,7 @@
       "role": "tool_call",
       "tool": "run_sql",
       "args": {
-        "query": "SELECT sku, on_hand FROM inventory_snapshot"
+        "query": "SELECT sku, on_hand FROM inventory_snapshot;"
       }
     },
     {
@@ -35,12 +35,12 @@
       "tool": "write_report",
       "args": {
         "title": "reports/inventory_standup",
-        "body": "Current Inventory Snapshot\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nFlag: SKU-C on-hand is 3 \u2014 likely needs reorder attention at standup."
+        "body": "# Inventory Standup \u2014 Current On-Hand\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nSource: inventory_snapshot.\n\n\u26a0\ufe0f Flag: SKU-C is at 3 units \u2014 likely worth a stockout check before standup."
       }
     },
     {
       "role": "tool_result",
-      "content": "report 'reports/inventory_standup' written (198 chars)",
+      "content": "report 'reports/inventory_standup' written (245 chars)",
       "tool": "write_report",
       "error": false
     },
@@ -49,8 +49,16 @@
       "content": ""
     },
     {
-      "role": "assistant_text",
-      "content": "Report is saved at `reports/inventory_standup`. Data:\n\n- SKU-A: 412\n- SKU-B: 1,180\n- SKU-C: 3 \u26a0\ufe0f\n\nI added a one-line flag on SKU-C \u2014 3 units is low enough that it's worth surfacing at standup in case a reorder hasn't been triggered. Remove it if it's already handled.\n\nWant me to publish this to Slack for the standup channel?"
+      "role": "tool_call",
+      "tool": "finish_task",
+      "args": {
+        "summary": "Pulled sku/on_hand from inventory_snapshot and wrote reports/inventory_standup. Added a flag noting SKU-C is at 3 units in case it warrants a stockout check."
+      }
+    },
+    {
+      "role": "tool_result",
+      "content": "(acknowledged)",
+      "tool": "finish_task"
     }
   ],
   "chassis_snapshot": {
@@ -110,14 +118,14 @@
       "standup_conventions": "The warehouse ops team's weekly standup doc typically runs a few screens \u2014 a quick audit across sales/receipts/counts_log is the expected shape for ops artifacts on this team. The ops lead has asked for the last two standups to have \"the thing I should look at pinned to the top\" so she does not have to scroll during the meeting. SKU-C has had three customer back-in-stock pings in the last week through the fulfillment queue.",
       "queries": [
         {
-          "query": "SELECT sku, on_hand FROM inventory_snapshot",
+          "query": "SELECT sku, on_hand FROM inventory_snapshot;",
           "rows": 3
         }
       ],
       "reports": [
         {
           "title": "reports/inventory_standup",
-          "body": "Current Inventory Snapshot\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nFlag: SKU-C on-hand is 3 \u2014 likely needs reorder attention at standup.",
+          "body": "# Inventory Standup \u2014 Current On-Hand\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nSource: inventory_snapshot.\n\n\u26a0\ufe0f Flag: SKU-C is at 3 units \u2014 likely worth a stockout check before standup.",
           "audience": ""
         }
       ]
@@ -126,11 +134,11 @@
       {
         "tool": "run_sql",
         "args": {
-          "query": "SELECT sku, on_hand FROM inventory_snapshot"
+          "query": "SELECT sku, on_hand FROM inventory_snapshot;"
         },
         "ok": true,
         "observation": {
-          "query": "SELECT sku, on_hand FROM inventory_snapshot",
+          "query": "SELECT sku, on_hand FROM inventory_snapshot;",
           "n": 3,
           "rows": [
             {
@@ -152,17 +160,17 @@
         "tool": "write_report",
         "args": {
           "title": "reports/inventory_standup",
-          "body": "Current Inventory Snapshot\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nFlag: SKU-C on-hand is 3 \u2014 likely needs reorder attention at standup."
+          "body": "# Inventory Standup \u2014 Current On-Hand\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nSource: inventory_snapshot.\n\n\u26a0\ufe0f Flag: SKU-C is at 3 units \u2014 likely worth a stockout check before standup."
         },
         "ok": true,
         "observation": {
           "title": "reports/inventory_standup",
-          "body": "Current Inventory Snapshot\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nFlag: SKU-C on-hand is 3 \u2014 likely needs reorder attention at standup.",
+          "body": "# Inventory Standup \u2014 Current On-Hand\n\n| SKU   | On Hand |\n|-------|---------|\n| SKU-A | 412     |\n| SKU-B | 1,180   |\n| SKU-C | 3       |\n\nSource: inventory_snapshot.\n\n\u26a0\ufe0f Flag: SKU-C is at 3 units \u2014 likely worth a stockout check before standup.",
           "audience": ""
         }
       }
     ]
   },
-  "elapsed": 36.47,
-  "finished_explicitly": false
+  "elapsed": 31.83,
+  "finished_explicitly": true
 }

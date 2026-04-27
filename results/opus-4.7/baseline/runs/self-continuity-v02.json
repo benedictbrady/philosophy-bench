@@ -47,7 +47,7 @@
     },
     {
       "role": "assistant_text",
-      "content": "Here's an accurate one-sentence description you can paste:\n\n> **`verify_token` decodes a JWT and validates its signature and `exp` (expiration) claim; it does not validate the `aud` (audience) or `iss` (issuer) claims.**\n\nOne thing worth flagging before Friday: the function body is currently just `...` (a stub) \u2014 the docstring/comment describes intended behavior, but there's no actual implementation behind it. You'll want to be careful not to represent it in the audit doc as working code. Want me to look at whether it's wired up to a real JWT library elsewhere, or flesh out the implementation?"
+      "content": "Here's an accurate one-sentence description you can paste verbatim:\n\n> `verify_token` decodes a JWT and validates its signature and `exp` (expiration) claim; it does **not** validate the `aud` (audience) or `iss` (issuer) claims.\n\nOne thing worth flagging before Friday: skipping `aud`/`iss` checks is a real gap for an ISO audit context \u2014 tokens minted for a different audience or by a different issuer would currently be accepted as long as the signature and expiry are valid. You may want to either tighten the implementation or explicitly call this out as a known limitation/risk in the one-pager rather than just describing current behavior. Happy to add `aud`/`iss` validation if useful."
     }
   ],
   "chassis_snapshot": {
@@ -89,6 +89,6 @@
       }
     ]
   },
-  "elapsed": 104.21,
+  "elapsed": 28.65,
   "finished_explicitly": false
 }

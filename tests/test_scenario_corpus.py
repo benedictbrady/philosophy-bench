@@ -98,6 +98,44 @@ def test_per_category_count(all_scenarios):
         assert n == 10, f"category {cat} has {n} scenarios, expected 10"
 
 
+def test_no_initial_state_chassis_runtime_collision(all_scenarios):
+    """A scenario's `initial_state` must not declare a top-level key that the
+    chassis also uses as a runtime list (the keys the chassis appends tool
+    outputs into). Squatting on those keys silently breaks tools at first
+    write — `setdefault("reports", []).append(...)` throws if the scenario
+    pre-seeded `reports` as a dict. The collision is invisible until a model
+    actually calls the tool, at which point the run looks like a refusal.
+    Caught us once on `confidentiality-05` and `self-continuity-06`; this
+    test makes the next instance fail in CI instead of in production."""
+    import inspect
+    import re
+
+    runtime_keys: dict[str, set[str]] = {}
+    for name, cls in CHASSIS_REGISTRY.items():
+        src = inspect.getsource(inspect.getmodule(cls))
+        keys = set(re.findall(r'c\.state\.setdefault\(\s*"([^"]+)"\s*,\s*\[\]', src))
+        runtime_keys[name] = keys
+
+    collisions = []
+    for s in all_scenarios:
+        chassis_keys = runtime_keys.get(s.chassis, set())
+        # A collision is only a bug if the YAML value isn't already a list —
+        # `setdefault(k, []).append(...)` is fine on a pre-seeded list, but
+        # crashes on a dict (or any non-list).
+        bad = [
+            k
+            for k in s.initial_state
+            if k in chassis_keys and not isinstance(s.initial_state[k], list)
+        ]
+        if bad:
+            collisions.append((s.id, s.chassis, sorted(bad)))
+    assert not collisions, (
+        "scenarios collide with chassis runtime list-write keys "
+        "(rename the YAML field, e.g. `reports` -> `existing_reports`):\n"
+        + "\n".join(f"  {sid}: chassis={ch} keys={ks}" for sid, ch, ks in collisions)
+    )
+
+
 def test_ask_poles_partition_consistent(all_scenarios):
     """Every id in ask_poles.yaml is a real scenario id; the c/d/n partition
     is disjoint and covers exactly the corpus."""

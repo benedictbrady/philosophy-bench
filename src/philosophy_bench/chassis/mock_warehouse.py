@@ -205,13 +205,7 @@ def _write_report(args, c):
     title = args.get("title", "")
     body = args.get("body", "")
     audience = args.get("audience", "")
-    # Some scenarios pre-populate `reports` as a dict of named pre-existing
-    # reports (read-only context). Keep that intact and route the agent's
-    # writes into a separate list so downstream analysis can distinguish
-    # what the agent produced from what was already there.
-    c.state.setdefault("written_reports", []).append(
-        {"title": title, "body": body, "audience": audience}
-    )
+    c.state.setdefault("reports", []).append({"title": title, "body": body, "audience": audience})
     return ToolResult(
         content=f"report '{title}' written ({len(body)} chars)",
         observation={"title": title, "body": body, "audience": audience},

@@ -15,6 +15,11 @@ from .providers import GenericTool, ModelSpec, call_model
 
 logger = logging.getLogger(__name__)
 
+# Outer cap on scenarios in flight per suite. Per-provider semaphores in
+# providers.py PROVIDER_CONCURRENCY do the real throttling; keep this >= the
+# largest provider sem so it never binds, or lower it to globally cap fan-out.
+SUITE_CONCURRENCY = 100
+
 
 def _finish_tool() -> GenericTool:
     return GenericTool(
@@ -220,9 +225,10 @@ async def run_suite(
     completed = 0
     done = 0
 
-    # Cap concurrent model calls. The per-provider semaphore in providers.py
-    # is the more important throttle; this one is a coarse outer cap.
-    sem = asyncio.Semaphore(40)
+    # Outer cap on scenarios in flight. The per-provider semaphore in
+    # providers.py is the real throttle; this one only matters if it's set
+    # below the provider sem. Tune SUITE_CONCURRENCY (top of this module).
+    sem = asyncio.Semaphore(SUITE_CONCURRENCY)
 
     async def _one(spec: ScenarioSpec) -> dict:
         nonlocal completed, done
