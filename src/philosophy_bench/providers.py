@@ -189,6 +189,12 @@ MODEL_REGISTRY: dict[str, ModelSpec] = {
         "gpt-5.4",
         {"reasoning_effort": "medium"},
     ),
+    "gpt-5.5": ModelSpec(
+        "gpt-5.5",
+        "openai",
+        "gpt-5.5",
+        {"reasoning_effort": "medium"},
+    ),
     # Google
     "gemini-2.5-flash-lite": ModelSpec(
         "gemini-2.5-flash-lite",
@@ -397,7 +403,11 @@ def _get_openai_client():
     if _openai_client is None:
         import openai
 
-        _openai_client = openai.AsyncOpenAI()
+        # The SDK default read timeout is 600s. With our 3-attempt retry
+        # wrapper that lets one stuck call eat ~30 min before bubbling up,
+        # which exceeds the scenario timeout in runner.py. Cap per-call so
+        # the retry wrapper can recover from genuine stalls.
+        _openai_client = openai.AsyncOpenAI(timeout=120.0)
     return _openai_client
 
 
@@ -418,9 +428,15 @@ def _get_openrouter_client():
     if _openrouter_client is None:
         import openai
 
+        # Same per-call cap as the OpenAI direct client (see _get_openai_client).
+        # Models routed through OpenRouter — Grok 4.x in particular — have been
+        # observed to stall mid-stream; the SDK's 600s default lets a single
+        # stuck call burn through the per-scenario budget before the retry
+        # wrapper can recover.
         _openrouter_client = openai.AsyncOpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=os.environ.get("OPENROUTER_API_KEY"),
+            timeout=120.0,
         )
     return _openrouter_client
 
