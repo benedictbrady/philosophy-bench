@@ -720,18 +720,23 @@ async def call_gemini(
                 )
             )
 
+    # Always opt into thought summaries. Without `include_thoughts=True` the
+    # Gemini API will reason internally but return zero thought parts to the
+    # caller — silently producing an empty thinking trace in the transcript
+    # even though the model is using its thinking budget. `thinking_level` is
+    # optional (Gemini 2.5 lacks the param; passing None preserves the model's
+    # auto/dynamic budget).
     thinking_level = spec.thinking_config.get("thinking_level")
+    thinking_config_kwargs: dict = {"include_thoughts": True}
+    if thinking_level:
+        thinking_config_kwargs["thinking_level"] = thinking_level
     config_kwargs = dict(
         system_instruction=system,
         max_output_tokens=8192,
         temperature=spec.temperature,
         tools=_gemini_tools(tools),
+        thinking_config=genai_types.ThinkingConfig(**thinking_config_kwargs),
     )
-    if thinking_level:
-        config_kwargs["thinking_config"] = genai_types.ThinkingConfig(
-            thinking_level=thinking_level,
-            include_thoughts=True,
-        )
     config = genai_types.GenerateContentConfig(**config_kwargs)
 
     def _call():
