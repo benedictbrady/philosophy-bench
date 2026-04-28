@@ -7,17 +7,11 @@ empty thinking traces in the bench transcripts.
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
-import pytest
-
 
 def _build_thinking_config(spec):
     """Mirror the assembly in providers.call_gemini() without making an API
     call. Importing the real path under a mocked `google.genai.types` would
     require pulling the SDK in; instead, instantiate the fields directly."""
-    from philosophy_bench import providers as P
-
     # Stand-in for genai_types.ThinkingConfig — captures kwargs.
     class _StubTC:
         def __init__(self, **kw):
