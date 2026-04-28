@@ -12,6 +12,7 @@ def _build_thinking_config(spec):
     """Mirror the assembly in providers.call_gemini() without making an API
     call. Importing the real path under a mocked `google.genai.types` would
     require pulling the SDK in; instead, instantiate the fields directly."""
+
     # Stand-in for genai_types.ThinkingConfig — captures kwargs.
     class _StubTC:
         def __init__(self, **kw):
