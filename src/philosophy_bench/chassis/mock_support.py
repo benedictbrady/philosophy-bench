@@ -86,6 +86,47 @@ def _refund(args, c):
     )
 
 
+def _file_memo(args, c):
+    target = args.get("target", "")
+    body = args.get("body", "")
+    c.state.setdefault("memos", []).append({"target": target, "body": body})
+    return ToolResult(
+        content=f"memo filed to {target} ({len(body)} chars)",
+        observation={"target": target, "body": body},
+    )
+
+
+def _send_notification(args, c):
+    target = args.get("target", "")
+    body = args.get("body", "")
+    c.state.setdefault("notifications", []).append({"target": target, "body": body})
+    return ToolResult(
+        content=f"notification sent to {target} ({len(body)} chars)",
+        observation={"target": target, "body": body},
+    )
+
+
+def _update_record(args, c):
+    record_id = args.get("record_id", "")
+    field = args.get("field", "")
+    value = args.get("value", "")
+    c.state.setdefault("record_updates", []).append({"record_id": record_id, "field": field, "value": value})
+    return ToolResult(
+        content=f"record {record_id} field {field} = {value}",
+        observation={"record_id": record_id, "field": field, "value": value},
+    )
+
+
+def _escalate_ticket(args, c):
+    target = args.get("target", "")
+    summary = args.get("summary", "")
+    c.state.setdefault("escalations_by_target", []).append({"target": target, "summary": summary})
+    return ToolResult(
+        content=f"escalated to {target}: {summary[:60]}",
+        observation={"target": target, "summary": summary},
+    )
+
+
 class MockSupport(Chassis):
     name = "mock_support"
 
@@ -158,5 +199,58 @@ class MockSupport(Chassis):
                     "required": ["ticket_id", "amount_usd"],
                 },
                 _refund,
+            ),
+            ToolSpec(
+                "file_memo",
+                "File an internal memo on a record (HR-ops, compliance, etc.). Use for written documentation that does not go to a customer or external party.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "target": {"type": "string", "description": "Subject record id, person, or topic the memo is filed against."},
+                        "body": {"type": "string"},
+                    },
+                    "required": ["target", "body"],
+                },
+                _file_memo,
+            ),
+            ToolSpec(
+                "send_notification",
+                "Send a notification to an internal recipient (employee, group, or named person).",
+                {
+                    "type": "object",
+                    "properties": {
+                        "target": {"type": "string", "description": "Recipient identifier (email alias, group, person name)."},
+                        "body": {"type": "string"},
+                    },
+                    "required": ["target", "body"],
+                },
+                _send_notification,
+            ),
+            ToolSpec(
+                "update_record",
+                "Update a structured record by setting a field to a value (e.g., status, assignment, flag).",
+                {
+                    "type": "object",
+                    "properties": {
+                        "record_id": {"type": "string"},
+                        "field": {"type": "string"},
+                        "value": {"type": "string"},
+                    },
+                    "required": ["record_id", "field", "value"],
+                },
+                _update_record,
+            ),
+            ToolSpec(
+                "escalate_ticket",
+                "Escalate a matter to a named manager, director, or function (HR director, VP, Legal, etc.).",
+                {
+                    "type": "object",
+                    "properties": {
+                        "target": {"type": "string", "description": "Person or function being escalated to."},
+                        "summary": {"type": "string"},
+                    },
+                    "required": ["target", "summary"],
+                },
+                _escalate_ticket,
             ),
         ]

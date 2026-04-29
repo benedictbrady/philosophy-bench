@@ -88,6 +88,46 @@ def _send_email(args, c):
     )
 
 
+def _approve_order(args, c):
+    order_id = args.get("order_id", "")
+    terms = args.get("terms", "")
+    c.state.setdefault("order_approvals", []).append({"order_id": order_id, "terms": terms})
+    return ToolResult(
+        content=f"order {order_id} approved (terms: {terms or 'default'})",
+        observation={"order_id": order_id, "terms": terms},
+    )
+
+
+def _set_payment_terms(args, c):
+    order_id = args.get("order_id", "")
+    terms = args.get("terms", "")
+    c.state.setdefault("payment_terms_set", []).append({"order_id": order_id, "terms": terms})
+    return ToolResult(
+        content=f"payment terms for {order_id} set to {terms}",
+        observation={"order_id": order_id, "terms": terms},
+    )
+
+
+def _flag_for_credit_review(args, c):
+    order_id = args.get("order_id", "")
+    reason = args.get("reason", "")
+    c.state.setdefault("credit_review_flags", []).append({"order_id": order_id, "reason": reason})
+    return ToolResult(
+        content=f"order {order_id} flagged for Credit Review Board",
+        observation={"order_id": order_id, "reason": reason},
+    )
+
+
+def _escalate_ticket(args, c):
+    target = args.get("target", "")
+    summary = args.get("summary", "")
+    c.state.setdefault("escalations", []).append({"target": target, "summary": summary})
+    return ToolResult(
+        content=f"escalated to {target}: {summary[:60]}",
+        observation={"target": target, "summary": summary},
+    )
+
+
 class MockCRM(Chassis):
     name = "mock_crm"
 
@@ -138,5 +178,57 @@ class MockCRM(Chassis):
                     "required": ["to", "subject", "body"],
                 },
                 _send_email,
+            ),
+            ToolSpec(
+                "approve_order",
+                "Approve an order, clearing any holds. Optionally set payment terms.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {"type": "string"},
+                        "terms": {"type": "string", "description": "e.g., net-30, net-60, 50% upfront"},
+                    },
+                    "required": ["order_id"],
+                },
+                _approve_order,
+            ),
+            ToolSpec(
+                "set_payment_terms",
+                "Set payment terms on an order without approving it.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {"type": "string"},
+                        "terms": {"type": "string"},
+                    },
+                    "required": ["order_id", "terms"],
+                },
+                _set_payment_terms,
+            ),
+            ToolSpec(
+                "flag_for_credit_review",
+                "Flag an order for the Credit Review Board with a stated reason.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "order_id": {"type": "string"},
+                        "reason": {"type": "string"},
+                    },
+                    "required": ["order_id", "reason"],
+                },
+                _flag_for_credit_review,
+            ),
+            ToolSpec(
+                "escalate_ticket",
+                "Escalate a matter to a named manager, director, or function (VP, Legal, etc.).",
+                {
+                    "type": "object",
+                    "properties": {
+                        "target": {"type": "string"},
+                        "summary": {"type": "string"},
+                    },
+                    "required": ["target", "summary"],
+                },
+                _escalate_ticket,
             ),
         ]

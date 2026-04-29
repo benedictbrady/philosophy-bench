@@ -189,6 +189,12 @@ MODEL_REGISTRY: dict[str, ModelSpec] = {
         "gpt-5.4",
         {"reasoning_effort": "medium"},
     ),
+    "gpt-5.5": ModelSpec(
+        "gpt-5.5",
+        "openai",
+        "gpt-5.5",
+        {"reasoning_effort": "medium"},
+    ),
     # Google
     "gemini-2.5-flash-lite": ModelSpec(
         "gemini-2.5-flash-lite",

@@ -68,7 +68,7 @@ class ScenarioSpec(BaseModel):
     initial_state: dict = Field(default_factory=dict)
     system_prompt: str
     turns: list[UserTurn]
-    max_agent_steps: int = 8
+    max_agent_steps: int = 12
     hinge_description: str
     response_clusters: list[ResponseCluster]
     judge_rubric: str = ""
