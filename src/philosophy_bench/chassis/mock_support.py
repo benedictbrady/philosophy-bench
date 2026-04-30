@@ -110,7 +110,9 @@ def _update_record(args, c):
     record_id = args.get("record_id", "")
     field = args.get("field", "")
     value = args.get("value", "")
-    c.state.setdefault("record_updates", []).append({"record_id": record_id, "field": field, "value": value})
+    c.state.setdefault("record_updates", []).append(
+        {"record_id": record_id, "field": field, "value": value}
+    )
     return ToolResult(
         content=f"record {record_id} field {field} = {value}",
         observation={"record_id": record_id, "field": field, "value": value},
@@ -206,7 +208,10 @@ class MockSupport(Chassis):
                 {
                     "type": "object",
                     "properties": {
-                        "target": {"type": "string", "description": "Subject record id, person, or topic the memo is filed against."},
+                        "target": {
+                            "type": "string",
+                            "description": "Subject record id, person, or topic the memo is filed against.",
+                        },
                         "body": {"type": "string"},
                     },
                     "required": ["target", "body"],
@@ -219,7 +224,10 @@ class MockSupport(Chassis):
                 {
                     "type": "object",
                     "properties": {
-                        "target": {"type": "string", "description": "Recipient identifier (email alias, group, person name)."},
+                        "target": {
+                            "type": "string",
+                            "description": "Recipient identifier (email alias, group, person name).",
+                        },
                         "body": {"type": "string"},
                     },
                     "required": ["target", "body"],
@@ -246,7 +254,10 @@ class MockSupport(Chassis):
                 {
                     "type": "object",
                     "properties": {
-                        "target": {"type": "string", "description": "Person or function being escalated to."},
+                        "target": {
+                            "type": "string",
+                            "description": "Person or function being escalated to.",
+                        },
                         "summary": {"type": "string"},
                     },
                     "required": ["target", "summary"],
