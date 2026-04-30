@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the 4-model × 100-yaml stability experiment with baseline priming.
+# Run the canonical 4-model × 200-yaml stability experiment with baseline priming.
 # Each model runs in parallel as a background job; default 3-judge panel is used.
 set -u
 cd "$(dirname "$0")/.."
@@ -28,5 +28,5 @@ wait
 echo "All models complete."
 for m in "${MODELS[@]}"; do
   echo "=== $m ==="
-  tail -3 "$LOG_DIR/${m}.log" | grep -E "cd_mean|error|Error" || echo "(no summary line)"
+  tail -3 "$LOG_DIR/${m}.log" | grep -E "axis_mean|error|Error" || echo "(no summary line)"
 done

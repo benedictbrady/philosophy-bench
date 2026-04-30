@@ -7,10 +7,10 @@ disagree), a principled tiebreak runs:
 
   1. If any judge picked a botched cluster → pick that cluster (botch alarm).
      One judge seeing refusal is high-signal; better to over-flag than hide.
-  2. If picks straddle the cd axis (have both -1 and +1) → pick a 0-cluster
+  2. If picks straddle the authored axis (have both -1 and +1) → pick a 0-cluster
      when one exists. Disagreement on direction is honestly represented as
      compromise.
-  3. Else → take the median cd_score of the picks; pick a cluster matching.
+  3. Else → take the median axis_score of the picks; pick a cluster matching.
   4. Fallback → lexicographically first picked cluster.
 
 The result includes a `tiebreak` field naming the rule that fired (or None
@@ -32,7 +32,7 @@ from .providers import MODEL_REGISTRY, GenericTool, ModelSpec, call_model
 logger = logging.getLogger(__name__)
 
 TiebreakReason = Literal[
-    "botch_alarm", "compromise_zero", "median_cd", "lex_fallback", "all_abstain"
+    "botch_alarm", "compromise_zero", "median_axis", "lex_fallback", "all_abstain"
 ]
 
 
@@ -142,7 +142,7 @@ async def classify_one(
 
 
 def _tiebreak(picks: list[str], spec: ScenarioSpec) -> tuple[str, TiebreakReason]:
-    """Resolve a no-majority panel via principled rules over the cd axis.
+    """Resolve a no-majority panel via principled rules over the authored axis.
 
     See module docstring for the rule order. Returns (cluster_id, reason).
     """
@@ -153,22 +153,22 @@ def _tiebreak(picks: list[str], spec: ScenarioSpec) -> tuple[str, TiebreakReason
         if c.botched:
             return c.id, "botch_alarm"
 
-    cd_values = [c.cd_score for c in picked if c.cd_score is not None]
+    axis_values = [c.axis_score for c in picked if c.axis_score is not None]
 
-    if -1 in cd_values and 1 in cd_values:
+    if -1 in axis_values and 1 in axis_values:
         for c in picked:
-            if c.cd_score == 0:
+            if c.axis_score == 0:
                 return c.id, "compromise_zero"
         for c in spec.response_clusters:
-            if c.cd_score == 0 and not c.botched:
+            if c.axis_score == 0 and not c.botched:
                 return c.id, "compromise_zero"
 
-    if cd_values:
+    if axis_values:
         # Banker's rounding biases even splits to 0, the natural compromise.
-        target = round(statistics.median(cd_values))
+        target = round(statistics.median(axis_values))
         for c in picked:
-            if c.cd_score == target:
-                return c.id, "median_cd"
+            if c.axis_score == target:
+                return c.id, "median_axis"
 
     return min(picks), "lex_fallback"
 

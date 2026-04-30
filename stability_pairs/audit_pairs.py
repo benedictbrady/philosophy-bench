@@ -2,10 +2,10 @@
 
 Runs eight checks against every stab_NNN_a / stab_NNN_b pair:
 
-  1. Cluster axis well-formedness (exactly one cd=+1, one cd=-1, ≥1 cd=0,
+  1. Cluster axis well-formedness (exactly one axis=+1, one axis=-1, ≥1 axis=0,
      exactly one botched=null).
-  2. Advocacy-pole correctness per file (A → pole=positive, cd=+1;
-     B → pole=negative, cd=-1).
+  2. Advocacy-pole correctness per file (A → pole=positive, axis=+1;
+     B → pole=negative, axis=-1).
   3. Cluster-id stability across A/B (per-cluster diff with informative msg).
   4. False-symmetry lint on non-botched cluster descriptions.
   5. Botched-strictness lint on the botched cluster description.
@@ -100,28 +100,33 @@ def botched_cluster(spec: dict) -> dict | None:
     return None
 
 
+def axis_score(obj: dict) -> int | None:
+    """Read the authored axis score, with legacy cd_score fallback."""
+    return obj.get("axis_score", obj.get("cd_score"))
+
+
 def check_cluster_axis(spec: dict, fname: str) -> tuple[list[str], list[str]]:
     """Returns (errors, warnings)."""
     errs, warns = [], []
     clusters = spec.get("response_clusters") or []
-    cd_counts = {-1: 0, 0: 0, 1: 0, None: 0}
+    axis_counts = {-1: 0, 0: 0, 1: 0, None: 0}
     botched_count = 0
     for c in clusters:
-        cd = c.get("cd_score")
-        if cd not in cd_counts:
-            errs.append(f"{fname}: cluster '{c.get('id')}' has invalid cd_score {cd}")
+        score = axis_score(c)
+        if score not in axis_counts:
+            errs.append(f"{fname}: cluster '{c.get('id')}' has invalid axis_score {score}")
             continue
-        cd_counts[cd] += 1
+        axis_counts[score] += 1
         if c.get("botched"):
             botched_count += 1
-            if cd is not None:
-                errs.append(f"{fname}: botched cluster '{c.get('id')}' must have cd_score: null, got {cd}")
-    if cd_counts[1] != 1:
-        errs.append(f"{fname}: must have exactly 1 cd=+1 cluster, found {cd_counts[1]}")
-    if cd_counts[-1] != 1:
-        errs.append(f"{fname}: must have exactly 1 cd=-1 cluster, found {cd_counts[-1]}")
-    if cd_counts[0] < 1:
-        errs.append(f"{fname}: must have at least 1 cd=0 cluster, found {cd_counts[0]}")
+            if score is not None:
+                errs.append(f"{fname}: botched cluster '{c.get('id')}' must have axis_score: null, got {score}")
+    if axis_counts[1] != 1:
+        errs.append(f"{fname}: must have exactly 1 axis=+1 cluster, found {axis_counts[1]}")
+    if axis_counts[-1] != 1:
+        errs.append(f"{fname}: must have exactly 1 axis=-1 cluster, found {axis_counts[-1]}")
+    if axis_counts[0] < 1:
+        errs.append(f"{fname}: must have at least 1 axis=0 cluster, found {axis_counts[0]}")
     if botched_count != 1:
         errs.append(f"{fname}: must have exactly 1 botched cluster, found {botched_count}")
     return errs, warns
@@ -138,9 +143,9 @@ def check_advocacy_block(spec: dict, fname: str, expected_pole: str) -> tuple[li
         return errs, warns
     if adv.get("pole") != expected_pole:
         errs.append(f"{fname}: advocacy.pole must be '{expected_pole}', got {adv.get('pole')!r}")
-    expected_cd = 1 if expected_pole == "positive" else -1
-    if adv.get("cd_score") != expected_cd:
-        errs.append(f"{fname}: advocacy.cd_score must be {expected_cd}, got {adv.get('cd_score')!r}")
+    expected_score = 1 if expected_pole == "positive" else -1
+    if axis_score(adv) != expected_score:
+        errs.append(f"{fname}: advocacy.axis_score must be {expected_score}, got {axis_score(adv)!r}")
     cid = adv.get("cluster_id")
     if not cid:
         errs.append(f"{fname}: advocacy.cluster_id required")
@@ -149,10 +154,10 @@ def check_advocacy_block(spec: dict, fname: str, expected_pole: str) -> tuple[li
     if not cluster:
         errs.append(f"{fname}: advocacy.cluster_id {cid!r} not in response_clusters")
         return errs, warns
-    if cluster.get("cd_score") != expected_cd:
+    if axis_score(cluster) != expected_score:
         errs.append(
             f"{fname}: advocacy points at cluster '{cid}' which has "
-            f"cd_score={cluster.get('cd_score')}, expected {expected_cd}"
+            f"axis_score={axis_score(cluster)}, expected {expected_score}"
         )
     if cluster.get("botched"):
         errs.append(f"{fname}: advocacy must not point at a botched cluster ({cid!r})")
@@ -309,13 +314,17 @@ def categorize(pair_errors: list[str], pair_warnings: list[str]) -> str:
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--scenarios", type=Path, default=SCEN,
+                    help="Scenario directory to audit.")
     ap.add_argument("--strict", action="store_true",
                     help="Treat warnings as fatal.")
     ap.add_argument("--quiet", action="store_true",
                     help="Skip per-pair detail output, just emit summary.")
     args = ap.parse_args()
 
-    a_files = sorted(SCEN.glob("stab_*_a.yaml"))
+    scen = args.scenarios
+    report_path = scen.parent / "audit_report.json" if scen.name != "scenarios" else REPORT_PATH
+    a_files = sorted(scen.glob("stab_*_a.yaml"))
     pair_ids = []
     by_pair: dict[str, dict] = {}
     structural_errors: list[str] = []
@@ -326,7 +335,7 @@ def main():
             structural_errors.append(f"unexpected name: {af.name}")
             continue
         pid = m.group(1)
-        bf = SCEN / f"stab_{pid}_b.yaml"
+        bf = scen / f"stab_{pid}_b.yaml"
         if not bf.exists():
             structural_errors.append(f"missing partner: {bf.name}")
             continue
@@ -384,7 +393,7 @@ def main():
         pair_ids.append(pid)
 
     # orphan check
-    for bf in sorted(SCEN.glob("stab_*_b.yaml")):
+    for bf in sorted(scen.glob("stab_*_b.yaml")):
         m = re.match(r"stab_(\d{3})_b", bf.stem)
         if not m:
             structural_errors.append(f"unexpected name: {bf.name}")
@@ -403,7 +412,7 @@ def main():
             for cat in "ABC"
         },
     }
-    REPORT_PATH.write_text(json.dumps(report, indent=2))
+    report_path.write_text(json.dumps(report, indent=2))
 
     # Print summary
     n_err = sum(len(v["errors"]) for v in by_pair.values()) + len(structural_errors)
@@ -415,7 +424,7 @@ def main():
     print(f"  Category C (cluster-rebuild):{cats['C']}")
     print(f"  Errors:   {n_err}")
     print(f"  Warnings: {n_warn}")
-    print(f"Report written to {REPORT_PATH.relative_to(Path.cwd()) if REPORT_PATH.is_relative_to(Path.cwd()) else REPORT_PATH}")
+    print(f"Report written to {report_path.relative_to(Path.cwd()) if report_path.is_relative_to(Path.cwd()) else report_path}")
 
     if not args.quiet:
         for pid in pair_ids:
