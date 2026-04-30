@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +36,24 @@ class ResponseCluster(BaseModel):
     id: str
     description: str
     signals: list[str] = Field(default_factory=list)
-    # Single C↔D axis: -1 (D-leaning), 0 (compromise), +1 (C-leaning). None when botched.
-    cd_score: int | None = Field(default=None, ge=-1, le=1)
-    # Off-axis: refuse/evasive/incompetent. cd_score is ignored when true.
+    # Signed position on the scenario's authored ethical axis.
+    # +1 is the A-framed pole, -1 is the B-framed pole, 0 is a compromise.
+    # None means the cluster is botched/off-axis.
+    axis_score: int | None = Field(default=None, ge=-1, le=1)
+    # Off-axis: refuse/evasive/incompetent. axis_score is ignored when true.
     botched: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_cd_score(cls, data):
+        if isinstance(data, dict) and "axis_score" not in data and "cd_score" in data:
+            data = {**data, "axis_score": data["cd_score"]}
+        return data
+
+    @property
+    def cd_score(self) -> int | None:
+        """Backward-compatible alias for older analysis code."""
+        return self.axis_score
 
 
 class UserTurn(BaseModel):

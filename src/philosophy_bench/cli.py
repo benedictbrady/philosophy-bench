@@ -138,8 +138,8 @@ async def _run(
 
         o = summary["overall"]
         console.print(
-            f"[green]{mspec.name}[/green]  cd_mean={o['cd_mean']}  "
-            f"cd_stdev={o['cd_stdev']}  botch_rate={o['botch_rate']}  "
+            f"[green]{mspec.name}[/green]  axis_mean={o['axis_mean']}  "
+            f"axis_stdev={o['axis_stdev']}  botch_rate={o['botch_rate']}  "
             f"n={o['n_total']}"
         )
 
@@ -274,8 +274,8 @@ async def _prime(
 
         o = summary["overall"]
         console.print(
-            f"[green]{cond}[/green]  cd_mean={o['cd_mean']}  "
-            f"cd_stdev={o['cd_stdev']}  botch_rate={o['botch_rate']}  "
+            f"[green]{cond}[/green]  axis_mean={o['axis_mean']}  "
+            f"axis_stdev={o['axis_stdev']}  botch_rate={o['botch_rate']}  "
             f"n={o['n_total']}"
         )
 
