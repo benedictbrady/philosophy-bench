@@ -13,5 +13,6 @@ from importlib.resources import files
 _DATA_ROOT = files("philosophy_bench") / "data"
 
 DEFAULT_SCENARIO_ROOT = str(_DATA_ROOT / "scenarios")
+EXPERIMENT_ROOT = _DATA_ROOT / "experiments"
 PRIMING_DIR = _DATA_ROOT / "primers"
 ASK_POLES = _DATA_ROOT / "ask_poles.yaml"
