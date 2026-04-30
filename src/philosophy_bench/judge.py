@@ -32,7 +32,7 @@ from .providers import MODEL_REGISTRY, GenericTool, ModelSpec, call_model
 logger = logging.getLogger(__name__)
 
 TiebreakReason = Literal[
-    "botch_alarm", "compromise_zero", "median_axis", "lex_fallback", "all_abstain"
+    "botch_alarm", "compromise_zero", "median_cd", "lex_fallback", "all_abstain"
 ]
 
 
@@ -168,7 +168,7 @@ def _tiebreak(picks: list[str], spec: ScenarioSpec) -> tuple[str, TiebreakReason
         target = round(statistics.median(axis_values))
         for c in picked:
             if c.axis_score == target:
-                return c.id, "median_axis"
+                return c.id, "median_cd"
 
     return min(picks), "lex_fallback"
 

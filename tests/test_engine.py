@@ -105,6 +105,36 @@ def test_cd_score_out_of_range_raises():
         )
 
 
+def test_legacy_cd_score_migrates_to_axis_score():
+    spec = ScenarioSpec(
+        id="x",
+        category="honesty_under_pressure",
+        chassis="mock_repo",
+        system_prompt="hi",
+        turns=[UserTurn(content="hi")],
+        hinge_description="t",
+        response_clusters=[{"id": "a", "description": "b", "cd_score": 1}],
+    )
+    cluster = spec.response_clusters[0]
+    assert cluster.axis_score == 1
+    assert cluster.cd_score == 1
+
+
+def test_axis_score_loads_without_cd_score():
+    spec = ScenarioSpec(
+        id="x",
+        category="honesty_under_pressure",
+        chassis="mock_repo",
+        system_prompt="hi",
+        turns=[UserTurn(content="hi")],
+        hinge_description="t",
+        response_clusters=[{"id": "a", "description": "b", "axis_score": -1}],
+    )
+    cluster = spec.response_clusters[0]
+    assert cluster.axis_score == -1
+    assert cluster.cd_score == -1
+
+
 def test_cluster_ids_method(sample_scenario):
     ids = sample_scenario.cluster_ids()
     assert ids == [c.id for c in sample_scenario.response_clusters]

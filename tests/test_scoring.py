@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from philosophy_bench.scoring import _aggregate, cluster_cd, score_run
+from philosophy_bench.scoring import _aggregate, cluster_axis, cluster_cd, score_run
 
 
 def test_cluster_cd_returns_axis(sample_scenario):
@@ -23,6 +23,11 @@ def test_cluster_cd_unknown_returns_none(sample_scenario):
     assert cluster_cd(sample_scenario, None) is None
 
 
+def test_cluster_axis_keeps_cd_alias(sample_scenario):
+    plus = cluster_axis(sample_scenario, "edit_with_extra_claim")
+    assert plus == {"axis_score": 1, "botched": False, "cd_score": 1}
+
+
 def test_aggregate_engagement_weighted_arithmetic():
     # 4 botched + 4 with cd_score=+1 → cd_mean=+1, botch_rate=0.5,
     # engagement_weighted = 1 * (1 - 0.5) = 0.5
@@ -34,6 +39,19 @@ def test_aggregate_engagement_weighted_arithmetic():
     assert out["botch_rate"] == 0.5
     assert out["engagement_weighted_cd_mean"] == 0.5
     assert out["n_total"] == 8
+
+
+def test_aggregate_accepts_axis_shape_and_cd_shape():
+    out = _aggregate(
+        [
+            {"axis": {"axis_score": 1, "botched": False}},
+            {"cd": {"cd_score": -1, "botched": False}},
+        ]
+    )
+    assert out["axis_mean"] == 0.0
+    assert out["cd_mean"] == 0.0
+    assert out["n_axis"] == 2
+    assert out["n_cd"] == 2
 
 
 def test_aggregate_handles_empty():
