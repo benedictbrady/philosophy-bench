@@ -25,8 +25,10 @@ for the full rubric.
 
 ## Results
 
-This repo ships the Opus 4.7 run under `results/opus-4.7/`. For data on
-other models, reach out to Benedict Brady.
+This repo ships public Opus 4.7 artifacts under each experiment's `results/`
+directory. The original C-vs-D run lives at
+`experiments/c_vs_d/results/opus-4.7/`. For data on other models, reach out to
+Benedict Brady.
 
 ## Install
 
@@ -42,7 +44,7 @@ produce a clear error at the first API call, not at import time.
 
 ```bash
 philosophy-bench models                    # list registered models (29)
-philosophy-bench scenarios                 # validate the bundled corpus
+philosophy-bench scenarios                 # validate the default C-vs-D corpus
 philosophy-bench run -m opus-4.7 --limit 5 # smoke test (5 scenarios)
 ```
 
@@ -81,18 +83,19 @@ See `SCORING.md` for the canonical rubric. In brief:
 
 `philosophy-bench` ships with 29 models across 4 providers. To add a model
 from a registered provider, edit `MODEL_REGISTRY` in
-`src/philosophy_bench/providers.py`. To add a scenario, copy
-`tests/fixtures/synthetic_scenario.yaml` into
-`src/philosophy_bench/data/scenarios/<category>/<your-id>.yaml` and
-follow the authoring rule above. Validate with `philosophy-bench scenarios`
-and `pytest tests/test_scenario_corpus.py`.
+`src/philosophy_bench/providers.py`. To add a scenario to the original C-vs-D
+experiment, copy `tests/fixtures/synthetic_scenario.yaml` into
+`experiments/c_vs_d/data/scenarios/<category>/<your-id>.yaml`, mirror it under
+`src/philosophy_bench/data/scenarios/` for wheel compatibility, and follow the
+authoring rule above. Validate with `philosophy-bench scenarios` and
+`pytest tests/test_scenario_corpus.py`.
 
 ## Results format
 
 `philosophy-bench prime` produces:
 
 ```
-results/priming/<model>/<condition>/
+experiments/c_vs_d/results/<model>/<condition>/
   ├── runs/<scenario_id>.json   # per-scenario raw transcripts (checkpointed)
   ├── judged.json               # judge verdicts merged into runs
   └── summary.json              # cd_mean, cd_stdev, botch_rate + breakdowns
@@ -109,7 +112,8 @@ philosophy-bench prime \
   --conditions baseline,c_direct,d_direct \
   --judge-model opus-4.7 \
   --judge-model gpt-5.4 \
-  --judge-model gemini-3.1-pro
+  --judge-model gemini-3.1-pro \
+  --output experiments/c_vs_d/results
 ```
 
 Note: `claude-opus-4-7` is an Anthropic API alias — exact transcript-level
@@ -130,5 +134,6 @@ reproduction will drift as the underlying snapshot migrates.
 ## License
 
 - **Code**: MIT — see `LICENSE`
-- **Data** (scenarios in `src/philosophy_bench/data/scenarios/` and the
-  model-output records in `results/`): CC-BY-4.0 — see `LICENSE-DATA`
+- **Data** (experiment scenarios/results in `experiments/` plus the bundled
+  compatibility mirror in `src/philosophy_bench/data/`): CC-BY-4.0 — see
+  `LICENSE-DATA`
