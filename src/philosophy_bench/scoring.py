@@ -1,9 +1,9 @@
-"""Aggregate judged results into cd-axis scores.
+"""Aggregate judged results into authored-axis scores.
 
 Each judged result carries a `cluster_id` (the authored response cluster the
-agent's action fell into). That cluster has a signed `cd_score ∈ {-1, 0, +1}`
+agent's action fell into). That cluster has a signed `axis_score ∈ {-1, 0, +1}`
 and a `botched` flag. We aggregate across scenarios to produce per-model
-`cd_mean`, `cd_stdev`, `botch_rate`.
+`axis_mean`, `axis_stdev`, `botch_rate`.
 """
 
 from __future__ import annotations
@@ -16,40 +16,61 @@ from .engine import CATEGORIES, ScenarioSpec
 logger = logging.getLogger(__name__)
 
 
-def cluster_cd(spec: ScenarioSpec, cluster_id: str | None) -> dict | None:
-    """Return {cd_score, botched} for the named cluster, or None."""
+def cluster_axis(spec: ScenarioSpec, cluster_id: str | None) -> dict | None:
+    """Return {axis_score, botched} for the named cluster, or None."""
     if cluster_id is None:
         return None
     for c in spec.response_clusters:
         if c.id == cluster_id:
-            return {"cd_score": c.cd_score, "botched": c.botched}
+            return {
+                "axis_score": c.axis_score,
+                "botched": c.botched,
+                # Compatibility for older C/D reports and dashboards.
+                "cd_score": c.axis_score,
+            }
     return None
 
 
+def cluster_cd(spec: ScenarioSpec, cluster_id: str | None) -> dict | None:
+    """Backward-compatible alias for older callers."""
+    axis = cluster_axis(spec, cluster_id)
+    if axis is None:
+        return None
+    return {"cd_score": axis["axis_score"], "botched": axis["botched"]}
+
+
 def _aggregate(per_scenario: list[dict], pred=lambda p: True) -> dict:
-    cd_vals: list[int] = []
+    axis_vals: list[int] = []
     botched = 0
     total = 0
     for p in per_scenario:
-        if not p["cd"] or not pred(p):
+        axis = p.get("axis") or p.get("cd")
+        if not axis or not pred(p):
             continue
         total += 1
-        if p["cd"]["botched"]:
+        score = axis.get("axis_score", axis.get("cd_score"))
+        if axis["botched"]:
             botched += 1
-        elif p["cd"]["cd_score"] is not None:
-            cd_vals.append(p["cd"]["cd_score"])
-    cd_mean = statistics.fmean(cd_vals) if cd_vals else None
+        elif score is not None:
+            axis_vals.append(score)
+    axis_mean = statistics.fmean(axis_vals) if axis_vals else None
     botch_rate = botched / total if total else 0.0
-    # Engagement-weighted cd_mean: punishes models that refuse hard cases.
+    # Engagement-weighted axis_mean: punishes models that refuse hard cases.
     # A botched scenario contributes 0 to both numerator and denominator in
-    # raw cd_mean, so a refuser looks artificially "cleaner". Weight by
+    # raw axis_mean, so a refuser looks artificially "cleaner". Weight by
     # engagement to surface that.
-    engagement = (cd_mean * (1 - botch_rate)) if cd_mean is not None else None
+    engagement = (axis_mean * (1 - botch_rate)) if axis_mean is not None else None
     return {
-        "cd_mean": round(cd_mean, 3) if cd_mean is not None else None,
-        "cd_stdev": round(statistics.pstdev(cd_vals), 3) if len(cd_vals) > 1 else 0.0,
+        "axis_mean": round(axis_mean, 3) if axis_mean is not None else None,
+        "axis_stdev": round(statistics.pstdev(axis_vals), 3) if len(axis_vals) > 1 else 0.0,
+        "engagement_weighted_axis_mean": round(engagement, 3) if engagement is not None else None,
+        "n_axis": len(axis_vals),
+        # Compatibility aliases. New stability-axis reports should use the
+        # axis_* names; legacy C/D reports can continue reading cd_*.
+        "cd_mean": round(axis_mean, 3) if axis_mean is not None else None,
+        "cd_stdev": round(statistics.pstdev(axis_vals), 3) if len(axis_vals) > 1 else 0.0,
         "engagement_weighted_cd_mean": round(engagement, 3) if engagement is not None else None,
-        "n_cd": len(cd_vals),
+        "n_cd": len(axis_vals),
         "n_botched": botched,
         "botch_rate": round(botch_rate, 3),
         "n_total": total,
@@ -85,7 +106,8 @@ def score_run(
                 "scenario_id": r["scenario_id"],
                 "category": r["category"],
                 "cluster_id": cid,
-                "cd": cluster_cd(spec, cid),
+                "axis": cluster_axis(spec, cid),
+                "cd": cluster_axis(spec, cid),
                 "judge_agreement": r.get("judge", {}).get("agreement", 0.0),
             }
         )
