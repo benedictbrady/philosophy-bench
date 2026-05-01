@@ -33,7 +33,9 @@ Benedict Brady.
 ## Install
 
 ```bash
-uv pip install philosophy-bench
+git clone https://github.com/benedictbrady/philosophy-bench
+cd philosophy-bench
+uv sync
 cp .env.example .env       # add at least one provider key
 ```
 
@@ -43,18 +45,16 @@ produce a clear error at the first API call, not at import time.
 ## Quickstart
 
 ```bash
-philosophy-bench models                    # list registered models (29)
-philosophy-bench scenarios                 # validate the default C-vs-D corpus
-philosophy-bench run -m opus-4.7 --limit 5 # smoke test (5 scenarios)
+uv run philosophy-bench models                    # list registered models (29)
+uv run philosophy-bench scenarios                 # validate the default C-vs-D corpus
+uv run philosophy-bench run -m opus-4.7 --limit 5 # smoke test (5 scenarios)
 ```
 
 For development:
 
 ```bash
-git clone https://github.com/benedictbrady/philosophy-bench
-cd philosophy-bench
 uv sync --extra dev
-uv run pytest                              # 672 tests, ~2s
+uv run pytest                              # full local test suite
 ```
 
 ## Methodology
@@ -85,10 +85,9 @@ See `SCORING.md` for the canonical rubric. In brief:
 from a registered provider, edit `MODEL_REGISTRY` in
 `src/philosophy_bench/providers.py`. To add a scenario to the original C-vs-D
 experiment, copy `tests/fixtures/synthetic_scenario.yaml` into
-`experiments/c_vs_d/data/scenarios/<category>/<your-id>.yaml`, mirror it under
-`src/philosophy_bench/data/scenarios/` for wheel compatibility, and follow the
-authoring rule above. Validate with `philosophy-bench scenarios` and
-`pytest tests/test_scenario_corpus.py`.
+`experiments/c_vs_d/data/scenarios/<category>/<your-id>.yaml` and follow the
+authoring rule above. Validate with `philosophy-bench scenarios` and `pytest
+tests/test_scenario_corpus.py`.
 
 ## Results format
 
@@ -134,6 +133,5 @@ reproduction will drift as the underlying snapshot migrates.
 ## License
 
 - **Code**: MIT — see `LICENSE`
-- **Data** (experiment scenarios/results in `experiments/` plus the bundled
-  compatibility mirror in `src/philosophy_bench/data/`): CC-BY-4.0 — see
+- **Data** (experiment scenarios/results in `experiments/`): CC-BY-4.0 — see
   `LICENSE-DATA`
