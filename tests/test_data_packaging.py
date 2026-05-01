@@ -1,9 +1,10 @@
-"""Tests that the bundled data is reachable via importlib.resources.
+"""Tests that installed package code resolves repo-level experiment data.
 
-Critical for catching the `pip install` vs editable-install path bug — the
-old `Path(__file__).parent.parent.parent / "priming"` resolution worked
-in the editable monorepo layout but pointed at a missing directory once
-the package was installed from a wheel."""
+The canonical repo layout keeps benchmark data in `experiments/`, not inside
+the Python package. These tests are run from a source checkout, including after
+installing the wheel into a clean venv, so they catch broken CLI imports while
+keeping data ownership unambiguous.
+"""
 
 from __future__ import annotations
 

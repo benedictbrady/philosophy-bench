@@ -13,10 +13,8 @@ experiments/c_vs_d/
   results/          checked-in public artifacts, limited to Opus 4.7
 ```
 
-For backward compatibility, the same scenario and primer data is mirrored under
-`src/philosophy_bench/data/` so wheel installs can still run the default
-benchmark without needing the repo checkout. Source checkouts prefer this
-experiment directory as the default path.
+This directory is the canonical home for the original experiment data. Shared
+Python code lives under `src/philosophy_bench/`; experiment data does not.
 
 Run it with:
 

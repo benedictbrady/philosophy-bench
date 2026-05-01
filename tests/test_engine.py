@@ -206,6 +206,6 @@ def test_build_transcript_truncates_long_tool_results():
 
 
 def test_load_all_scenarios_default_root_is_a_real_dir():
-    # Smoke test for the importlib.resources path resolution
+    # Smoke test for the default repo-level scenario path resolution.
     specs = load_all_scenarios(DEFAULT_SCENARIO_ROOT)
     assert specs, f"no scenarios under {DEFAULT_SCENARIO_ROOT}"
