@@ -8,3 +8,7 @@ Shared experiment infrastructure is the package CLI and engine:
 
 Keep reusable code in `src/philosophy_bench/`. Keep experiment-only scripts in
 the experiment's own `harness/` directory.
+
+In a source checkout, the default CLI paths point at
+`experiments/c_vs_d/data`. In an installed wheel, they fall back to the bundled
+compatibility mirror under `src/philosophy_bench/data`.
